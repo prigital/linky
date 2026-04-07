@@ -32,9 +32,13 @@ export default function Dashboard({ user, onRefreshUser }) {
     e.preventDefault();
     setError('');
 
-    if (!url.trim()) {
+    let finalUrl = url.trim();
+    if (!finalUrl) {
       setError('URL is required.');
       return;
+    }
+    if (!/^https?:\/\//i.test(finalUrl)) {
+      finalUrl = 'https://' + finalUrl;
     }
 
     setSubmitting(true);
@@ -42,7 +46,7 @@ export default function Dashboard({ user, onRefreshUser }) {
       const res = await fetch('/api/links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim(), title: title.trim(), notes: notes.trim() }),
+        body: JSON.stringify({ url: finalUrl, title: title.trim(), notes: notes.trim() }),
       });
 
       if (res.ok) {
@@ -105,7 +109,7 @@ export default function Dashboard({ user, onRefreshUser }) {
                 <label htmlFor="url">URL *</label>
                 <input
                   id="url"
-                  type="url"
+                  type="text"
                   placeholder="https://example.com"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
