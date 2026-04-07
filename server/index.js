@@ -12,6 +12,9 @@ const linksRouter = require('./routes/links');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust reverse proxy (needed for HTTPS cookies behind nginx/etc.)
+app.set('trust proxy', 1);
+
 // Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -25,6 +28,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     },
   })
 );

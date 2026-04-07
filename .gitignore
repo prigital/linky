@@ -3,4 +3,5 @@ node_modules
 linky.db
 client/dist
 *.session.db
+sessions.db
 /.claude
