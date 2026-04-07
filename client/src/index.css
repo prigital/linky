@@ -108,6 +108,23 @@ a:hover {
   background: #fff5f5;
 }
 
+/* ── Icon button ── */
+.btn-icon {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-icon:hover {
+  background: #f3f4f6;
+}
+
 /* ── Login ── */
 .login-container {
   display: flex;

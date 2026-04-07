@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { SquarePen, Trash2 } from 'lucide-react';
 
 export default function Dashboard({ user, onRefreshUser }) {
   const [links, setLinks] = useState([]);
@@ -288,18 +289,18 @@ export default function Dashboard({ user, onRefreshUser }) {
                       </div>
                       <div className="link-actions">
                         <button
-                          className="btn btn-outline"
+                          className="btn btn-icon"
                           onClick={() => startEdit(link)}
                           aria-label="Edit link"
                         >
-                          Edit
+                          <SquarePen size={18} color="#6b7280" />
                         </button>
                         <button
-                          className="btn btn-danger"
+                          className="btn btn-icon"
                           onClick={() => handleDelete(link.id)}
                           aria-label="Delete link"
                         >
-                          Delete
+                          <Trash2 size={18} color="#6b7280" />
                         </button>
                       </div>
                     </>
