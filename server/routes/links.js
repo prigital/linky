@@ -43,6 +43,31 @@ router.post('/', function (req, res) {
   res.status(201).json({ link: newLink });
 });
 
+// PUT /api/links/:id
+router.put('/:id', function (req, res) {
+  const { id } = req.params;
+  const { url, title, notes } = req.body;
+
+  if (!url || typeof url !== 'string' || url.trim() === '') {
+    return res.status(400).json({ error: 'url is required' });
+  }
+
+  const link = db
+    .prepare('SELECT * FROM links WHERE id = ? AND user_id = ?')
+    .get(id, req.user.id);
+
+  if (!link) {
+    return res.status(404).json({ error: 'Link not found' });
+  }
+
+  db.prepare(
+    'UPDATE links SET url = ?, title = ?, notes = ? WHERE id = ? AND user_id = ?'
+  ).run(url.trim(), title || null, notes || null, id, req.user.id);
+
+  const updated = db.prepare('SELECT * FROM links WHERE id = ?').get(id);
+  res.json({ link: updated });
+});
+
 // DELETE /api/links/:id
 router.delete('/:id', function (req, res) {
   const { id } = req.params;
