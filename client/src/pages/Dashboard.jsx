@@ -272,17 +272,19 @@ export default function Dashboard({ user, onRefreshUser }) {
                   ) : (
                     <>
                       <div className="link-main">
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="link-title"
-                        >
-                          {link.title ? link.title : truncate(link.url)}
-                        </a>
-                        {link.title && (
-                          <span className="link-url">{truncate(link.url)}</span>
-                        )}
+                        <div className="link-title-row">
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="link-title"
+                          >
+                            {link.title ? link.title : truncate(link.url)}
+                          </a>
+                          {link.title && (
+                            <span className="link-url">{truncate(link.url)}</span>
+                          )}
+                        </div>
                         {link.notes && (
                           <p className="link-notes">{link.notes}</p>
                         )}

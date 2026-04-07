@@ -375,6 +375,13 @@ a:hover {
   min-width: 0;
 }
 
+.link-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
 .link-title {
   font-weight: 600;
   font-size: 0.97rem;
