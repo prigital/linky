@@ -281,11 +281,23 @@ a:hover {
   padding: 28px 28px;
 }
 
-.links-section h2 {
-  font-size: 1.15rem;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: #111;
+.link-group {
+  margin-bottom: 28px;
+}
+
+.link-group:last-child {
+  margin-bottom: 0;
+}
+
+.link-group-heading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .add-link-form {
@@ -333,6 +345,94 @@ a:hover {
 
 .form-group textarea {
   resize: vertical;
+}
+
+.category-combobox {
+  position: relative;
+}
+
+.category-combobox-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.category-combobox-input-wrap input {
+  width: 100%;
+  padding: 10px 32px 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #1a1a2e;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.category-combobox-input-wrap input:focus {
+  border-color: #4361ee;
+  background: #fff;
+}
+
+.category-combobox-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+.category-combobox-clear:hover {
+  color: #374151;
+}
+
+.category-combobox-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 200;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.category-combobox-dropdown li {
+  padding: 9px 14px;
+  font-size: 0.93rem;
+  cursor: pointer;
+  color: #1a1a2e;
+}
+
+.category-combobox-dropdown li:hover,
+.category-combobox-dropdown li.active {
+  background: #f0f3ff;
+  color: #4361ee;
+}
+
+.category-combobox-create {
+  color: #4361ee;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 2px;
+  padding-top: 9px;
+}
+
+.category-combobox-empty {
+  color: #9ca3af;
+  font-style: italic;
+  cursor: default;
 }
 
 .form-error {

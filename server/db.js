@@ -18,6 +18,7 @@ db.exec(`
     url TEXT NOT NULL,
     title TEXT,
     notes TEXT,
+    category TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id)
   );

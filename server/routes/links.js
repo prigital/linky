@@ -25,16 +25,16 @@ router.get('/', function (req, res) {
 
 // POST /api/links
 router.post('/', function (req, res) {
-  const { url, title, notes } = req.body;
+  const { url, title, notes, category } = req.body;
 
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return res.status(400).json({ error: 'url is required' });
   }
 
   const stmt = db.prepare(
-    'INSERT INTO links (user_id, url, title, notes) VALUES (?, ?, ?, ?)'
+    'INSERT INTO links (user_id, url, title, notes, category) VALUES (?, ?, ?, ?, ?)'
   );
-  const result = stmt.run(req.user.id, url.trim(), title || null, notes || null);
+  const result = stmt.run(req.user.id, url.trim(), title || null, notes || null, category || null);
 
   const newLink = db
     .prepare('SELECT * FROM links WHERE id = ?')
@@ -46,7 +46,7 @@ router.post('/', function (req, res) {
 // PUT /api/links/:id
 router.put('/:id', function (req, res) {
   const { id } = req.params;
-  const { url, title, notes } = req.body;
+  const { url, title, notes, category } = req.body;
 
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return res.status(400).json({ error: 'url is required' });
@@ -61,8 +61,8 @@ router.put('/:id', function (req, res) {
   }
 
   db.prepare(
-    'UPDATE links SET url = ?, title = ?, notes = ? WHERE id = ? AND user_id = ?'
-  ).run(url.trim(), title || null, notes || null, id, req.user.id);
+    'UPDATE links SET url = ?, title = ?, notes = ?, category = ? WHERE id = ? AND user_id = ?'
+  ).run(url.trim(), title || null, notes || null, category || null, id, req.user.id);
 
   const updated = db.prepare('SELECT * FROM links WHERE id = ?').get(id);
   res.json({ link: updated });
