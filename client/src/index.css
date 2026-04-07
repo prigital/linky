@@ -201,11 +201,40 @@ a:hover {
   gap: 40px;
 }
 
-/* ── Section toolbar ── */
-.section-toolbar {
+/* ── Search section ── */
+.links-search-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+}
+
+/* ── Floating Action Button ── */
+.fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #4361ee;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(67, 97, 238, 0.45);
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  z-index: 100;
+}
+
+.fab:hover {
+  background: #3451d1;
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(67, 97, 238, 0.55);
+}
+
+.fab:active {
+  transform: scale(0.96);
 }
 
 .search-input {
@@ -381,6 +410,11 @@ a:hover {
   .add-link-section,
   .links-section {
     padding: 20px 16px;
+  }
+
+  .fab {
+    bottom: 20px;
+    right: 20px;
   }
 
   .login-card {

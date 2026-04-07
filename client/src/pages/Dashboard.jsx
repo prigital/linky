@@ -164,20 +164,18 @@ export default function Dashboard({ user, onRefreshUser }) {
       </header>
 
       <main className="main-content">
-        <section className="add-link-section">
-          <div className="section-toolbar">
-            <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
-            + Add Link
-            </button>
-            <input
-              className="search-input"
-              type="search"
-              placeholder="Search links…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          {showForm && (
+        <section className="links-search-section">
+          <input
+            className="search-input"
+            type="search"
+            placeholder="Search links…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </section>
+
+        {showForm && (
+          <section className="add-link-section">
             <form onSubmit={handleSubmit} className="add-link-form">
               {error && <p className="form-error">{error}</p>}
               <div className="form-group">
@@ -220,8 +218,8 @@ export default function Dashboard({ user, onRefreshUser }) {
                 </button>
               </div>
             </form>
-          )}
-        </section>
+          </section>
+        )}
 
         <section className="links-section">
           <h2>Your Links</h2>
@@ -312,6 +310,17 @@ export default function Dashboard({ user, onRefreshUser }) {
           )}
         </section>
       </main>
+
+      <button
+        className="fab"
+        onClick={() => setShowForm((v) => !v)}
+        aria-label="Add link"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
     </div>
   );
 }
