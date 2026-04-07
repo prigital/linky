@@ -8,6 +8,7 @@ export default function Dashboard({ user, onRefreshUser }) {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
   const fetchLinks = useCallback(async () => {
     try {
@@ -48,6 +49,7 @@ export default function Dashboard({ user, onRefreshUser }) {
         setUrl('');
         setTitle('');
         setNotes('');
+        setShowForm(false);
         await fetchLinks();
       } else {
         const data = await res.json();
@@ -93,44 +95,53 @@ export default function Dashboard({ user, onRefreshUser }) {
 
       <main className="main-content">
         <section className="add-link-section">
-          <h2>Add a Link</h2>
-          <form onSubmit={handleSubmit} className="add-link-form">
-            {error && <p className="form-error">{error}</p>}
-            <div className="form-group">
-              <label htmlFor="url">URL *</label>
-              <input
-                id="url"
-                type="url"
-                placeholder="https://example.com"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="title">Title</label>
-              <input
-                id="title"
-                type="text"
-                placeholder="Optional title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="notes">Notes</label>
-              <textarea
-                id="notes"
-                placeholder="Optional notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Saving…' : 'Save Link'}
-            </button>
-          </form>
+          <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
+            + Add Link
+          </button>
+          {showForm && (
+            <form onSubmit={handleSubmit} className="add-link-form">
+              {error && <p className="form-error">{error}</p>}
+              <div className="form-group">
+                <label htmlFor="url">URL *</label>
+                <input
+                  id="url"
+                  type="url"
+                  placeholder="https://example.com"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="title">Title</label>
+                <input
+                  id="title"
+                  type="text"
+                  placeholder="Optional title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="notes">Notes</label>
+                <textarea
+                  id="notes"
+                  placeholder="Optional notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? 'Saving…' : 'Save Link'}
+                </button>
+                <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
         </section>
 
         <section className="links-section">

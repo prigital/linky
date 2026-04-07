@@ -209,7 +209,6 @@ a:hover {
   padding: 28px 28px;
 }
 
-.add-link-section h2,
 .links-section h2 {
   font-size: 1.15rem;
   font-weight: 600;
@@ -221,6 +220,12 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-top: 20px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .form-group {
