@@ -172,6 +172,7 @@ export default function Dashboard({ user, onRefreshUser }) {
             placeholder="Search links…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            autoFocus
           />
         </section>
 
