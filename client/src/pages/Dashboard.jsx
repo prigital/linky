@@ -106,6 +106,7 @@ export default function Dashboard({ user, onRefreshUser }) {
   const [editCategory, setEditCategory] = useState('');
   const [editError, setEditError] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const fetchLinks = useCallback(async () => {
     try {
@@ -227,6 +228,11 @@ export default function Dashboard({ user, onRefreshUser }) {
     }
   }
 
+  // Reset selection when search changes
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [search]);
+
   const filteredLinks = search.trim()
     ? links.filter((l) => {
         const q = search.toLowerCase();
@@ -283,6 +289,19 @@ export default function Dashboard({ user, onRefreshUser }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && filteredLinks.length > 0) {
+                e.preventDefault();
+                window.open(filteredLinks[selectedIndex]?.url, '_blank', 'noopener,noreferrer');
+                setSearch('');
+              } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedIndex((i) => Math.min(i + 1, filteredLinks.length - 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedIndex((i) => Math.max(i - 1, 0));
+              }
+            }}
           />
         </section>
 
@@ -348,7 +367,7 @@ export default function Dashboard({ user, onRefreshUser }) {
                 <h2 className="link-group-heading">{key === 'null' || key === null ? 'Uncategorised' : key}</h2>
                 <ul className="links-list">
                   {grouped[key].map((link) => (
-                    <li key={link.id} className="link-item">
+                    <li key={link.id} className={`link-item${search.trim() && filteredLinks.indexOf(link) === selectedIndex ? ' link-item-selected' : ''}`}>
                       {editingId === link.id ? (
                         <form className="edit-form" onSubmit={(e) => handleEdit(e, link.id)}>
                           {editError && <p className="form-error">{editError}</p>}

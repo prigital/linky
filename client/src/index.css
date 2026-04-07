@@ -468,6 +468,11 @@ a:hover {
   background: #f0f3ff;
 }
 
+.link-item-selected {
+  background: #f0f3ff;
+  border-color: #4361ee;
+}
+
 .link-main {
   display: flex;
   flex-direction: column;
