@@ -169,6 +169,7 @@ a:hover {
   font-weight: 700;
   color: #4361ee;
   letter-spacing: -0.5px;
+  text-decoration: none;
 }
 
 .header-user {

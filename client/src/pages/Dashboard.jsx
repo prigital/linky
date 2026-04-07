@@ -151,7 +151,7 @@ export default function Dashboard({ user, onRefreshUser }) {
   return (
     <div className="dashboard">
       <header className="header">
-        <span className="header-brand">Linky</span>
+        <a href="/" className="header-brand">Linky</a>
         <div className="header-user">
           {user.avatar && (
             <img src={user.avatar} alt={user.name} className="avatar" />
