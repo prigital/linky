@@ -9,6 +9,13 @@ export default function Dashboard({ user, onRefreshUser }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editUrl, setEditUrl] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editError, setEditError] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   const fetchLinks = useCallback(async () => {
     try {
@@ -32,9 +39,13 @@ export default function Dashboard({ user, onRefreshUser }) {
     e.preventDefault();
     setError('');
 
-    if (!url.trim()) {
+    let finalUrl = url.trim();
+    if (!finalUrl) {
       setError('URL is required.');
       return;
+    }
+    if (!/^https?:\/\//i.test(finalUrl)) {
+      finalUrl = 'https://' + finalUrl;
     }
 
     setSubmitting(true);
@@ -42,7 +53,7 @@ export default function Dashboard({ user, onRefreshUser }) {
       const res = await fetch('/api/links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim(), title: title.trim(), notes: notes.trim() }),
+        body: JSON.stringify({ url: finalUrl, title: title.trim(), notes: notes.trim() }),
       });
 
       if (res.ok) {
@@ -62,6 +73,54 @@ export default function Dashboard({ user, onRefreshUser }) {
     }
   }
 
+  function startEdit(link) {
+    setEditingId(link.id);
+    setEditUrl(link.url);
+    setEditTitle(link.title || '');
+    setEditNotes(link.notes || '');
+    setEditError('');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditError('');
+  }
+
+  async function handleEdit(e, id) {
+    e.preventDefault();
+    setEditError('');
+
+    let finalUrl = editUrl.trim();
+    if (!finalUrl) {
+      setEditError('URL is required.');
+      return;
+    }
+    if (!/^https?:\/\//i.test(finalUrl)) {
+      finalUrl = 'https://' + finalUrl;
+    }
+
+    setEditSubmitting(true);
+    try {
+      const res = await fetch(`/api/links/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: finalUrl, title: editTitle.trim(), notes: editNotes.trim() }),
+      });
+
+      if (res.ok) {
+        setEditingId(null);
+        await fetchLinks();
+      } else {
+        const data = await res.json();
+        setEditError(data.error || 'Failed to update link.');
+      }
+    } catch {
+      setEditError('Network error. Please try again.');
+    } finally {
+      setEditSubmitting(false);
+    }
+  }
+
   async function handleDelete(id) {
     try {
       const res = await fetch(`/api/links/${id}`, { method: 'DELETE' });
@@ -72,6 +131,17 @@ export default function Dashboard({ user, onRefreshUser }) {
       // silently fail
     }
   }
+
+  const filteredLinks = search.trim()
+    ? links.filter((l) => {
+        const q = search.toLowerCase();
+        return (
+          l.url.toLowerCase().includes(q) ||
+          (l.title && l.title.toLowerCase().includes(q)) ||
+          (l.notes && l.notes.toLowerCase().includes(q))
+        );
+      })
+    : links;
 
   function truncate(str, maxLen = 60) {
     if (!str) return '';
@@ -95,9 +165,18 @@ export default function Dashboard({ user, onRefreshUser }) {
 
       <main className="main-content">
         <section className="add-link-section">
-          <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
+          <div className="section-toolbar">
+            <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
             + Add Link
-          </button>
+            </button>
+            <input
+              className="search-input"
+              type="search"
+              placeholder="Search links…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           {showForm && (
             <form onSubmit={handleSubmit} className="add-link-form">
               {error && <p className="form-error">{error}</p>}
@@ -105,7 +184,7 @@ export default function Dashboard({ user, onRefreshUser }) {
                 <label htmlFor="url">URL *</label>
                 <input
                   id="url"
-                  type="url"
+                  type="text"
                   placeholder="https://example.com"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -148,35 +227,85 @@ export default function Dashboard({ user, onRefreshUser }) {
           <h2>Your Links</h2>
           {loadingLinks ? (
             <p className="muted">Loading…</p>
-          ) : links.length === 0 ? (
-            <p className="muted">No links saved yet. Add one above!</p>
+          ) : filteredLinks.length === 0 ? (
+            <p className="muted">{links.length === 0 ? 'No links saved yet. Add one above!' : 'No links match your search.'}</p>
           ) : (
             <ul className="links-list">
-              {links.map((link) => (
+              {filteredLinks.map((link) => (
                 <li key={link.id} className="link-item">
-                  <div className="link-main">
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="link-title"
-                    >
-                      {link.title ? link.title : truncate(link.url)}
-                    </a>
-                    {link.title && (
-                      <span className="link-url">{truncate(link.url)}</span>
-                    )}
-                    {link.notes && (
-                      <p className="link-notes">{link.notes}</p>
-                    )}
-                  </div>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(link.id)}
-                    aria-label="Delete link"
-                  >
-                    Delete
-                  </button>
+                  {editingId === link.id ? (
+                    <form className="edit-form" onSubmit={(e) => handleEdit(e, link.id)}>
+                      {editError && <p className="form-error">{editError}</p>}
+                      <div className="form-group">
+                        <label>URL *</label>
+                        <input
+                          type="text"
+                          value={editUrl}
+                          onChange={(e) => setEditUrl(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Title</label>
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Notes</label>
+                        <textarea
+                          value={editNotes}
+                          onChange={(e) => setEditNotes(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                      <div className="form-actions">
+                        <button type="submit" className="btn btn-primary" disabled={editSubmitting}>
+                          {editSubmitting ? 'Saving…' : 'Save'}
+                        </button>
+                        <button type="button" className="btn btn-outline" onClick={cancelEdit}>
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="link-main">
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="link-title"
+                        >
+                          {link.title ? link.title : truncate(link.url)}
+                        </a>
+                        {link.title && (
+                          <span className="link-url">{truncate(link.url)}</span>
+                        )}
+                        {link.notes && (
+                          <p className="link-notes">{link.notes}</p>
+                        )}
+                      </div>
+                      <div className="link-actions">
+                        <button
+                          className="btn btn-outline"
+                          onClick={() => startEdit(link)}
+                          aria-label="Edit link"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-danger"
+                          onClick={() => handleDelete(link.id)}
+                          aria-label="Delete link"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
