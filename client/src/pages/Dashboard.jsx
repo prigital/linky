@@ -9,6 +9,7 @@ export default function Dashboard({ user, onRefreshUser }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editUrl, setEditUrl] = useState('');
   const [editTitle, setEditTitle] = useState('');
@@ -131,6 +132,17 @@ export default function Dashboard({ user, onRefreshUser }) {
     }
   }
 
+  const filteredLinks = search.trim()
+    ? links.filter((l) => {
+        const q = search.toLowerCase();
+        return (
+          l.url.toLowerCase().includes(q) ||
+          (l.title && l.title.toLowerCase().includes(q)) ||
+          (l.notes && l.notes.toLowerCase().includes(q))
+        );
+      })
+    : links;
+
   function truncate(str, maxLen = 60) {
     if (!str) return '';
     return str.length > maxLen ? str.slice(0, maxLen) + '…' : str;
@@ -153,9 +165,18 @@ export default function Dashboard({ user, onRefreshUser }) {
 
       <main className="main-content">
         <section className="add-link-section">
-          <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
+          <div className="section-toolbar">
+            <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
             + Add Link
-          </button>
+            </button>
+            <input
+              className="search-input"
+              type="search"
+              placeholder="Search links…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           {showForm && (
             <form onSubmit={handleSubmit} className="add-link-form">
               {error && <p className="form-error">{error}</p>}
@@ -206,11 +227,11 @@ export default function Dashboard({ user, onRefreshUser }) {
           <h2>Your Links</h2>
           {loadingLinks ? (
             <p className="muted">Loading…</p>
-          ) : links.length === 0 ? (
-            <p className="muted">No links saved yet. Add one above!</p>
+          ) : filteredLinks.length === 0 ? (
+            <p className="muted">{links.length === 0 ? 'No links saved yet. Add one above!' : 'No links match your search.'}</p>
           ) : (
             <ul className="links-list">
-              {links.map((link) => (
+              {filteredLinks.map((link) => (
                 <li key={link.id} className="link-item">
                   {editingId === link.id ? (
                     <form className="edit-form" onSubmit={(e) => handleEdit(e, link.id)}>

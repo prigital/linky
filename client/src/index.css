@@ -200,6 +200,31 @@ a:hover {
   gap: 40px;
 }
 
+/* ── Section toolbar ── */
+.section-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #1a1a2e;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.search-input:focus {
+  border-color: #4361ee;
+  background: #fff;
+}
+
 /* ── Add Link Form ── */
 .add-link-section,
 .links-section {
