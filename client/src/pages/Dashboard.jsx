@@ -367,7 +367,12 @@ export default function Dashboard({ user, onRefreshUser }) {
                 <h2 className="link-group-heading">{key === 'null' || key === null ? 'Uncategorised' : key}</h2>
                 <ul className="links-list">
                   {grouped[key].map((link) => (
-                    <li key={link.id} className={`link-item${search.trim() && filteredLinks.indexOf(link) === selectedIndex ? ' link-item-selected' : ''}`}>
+                    <li
+                      key={link.id}
+                      className={`link-item${search.trim() && filteredLinks.indexOf(link) === selectedIndex ? ' link-item-selected' : ''}`}
+                      onClick={() => { if (editingId !== link.id) window.open(link.url, '_blank', 'noopener,noreferrer'); }}
+                      style={editingId !== link.id ? { cursor: 'pointer' } : undefined}
+                    >
                       {editingId === link.id ? (
                         <form className="edit-form" onSubmit={(e) => handleEdit(e, link.id)}>
                           {editError && <p className="form-error">{editError}</p>}
@@ -418,6 +423,7 @@ export default function Dashboard({ user, onRefreshUser }) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="link-title"
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 {link.title ? link.title : truncate(link.url)}
                               </a>
@@ -432,14 +438,14 @@ export default function Dashboard({ user, onRefreshUser }) {
                           <div className="link-actions">
                             <button
                               className="btn btn-icon"
-                              onClick={() => startEdit(link)}
+                              onClick={(e) => { e.stopPropagation(); startEdit(link); }}
                               aria-label="Edit link"
                             >
                               <SquarePen size={18} color="#6b7280" />
                             </button>
                             <button
                               className="btn btn-icon"
-                              onClick={() => handleDelete(link.id)}
+                              onClick={(e) => { e.stopPropagation(); handleDelete(link.id); }}
                               aria-label="Delete link"
                             >
                               <Trash2 size={18} color="#6b7280" />
