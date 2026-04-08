@@ -108,6 +108,7 @@ export default function Dashboard({ user, onRefreshUser }) {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const searchRef = useRef(null);
+  const urlRef = useRef(null);
 
   useEffect(() => {
     const focusSearch = () => searchRef.current?.focus();
@@ -120,6 +121,17 @@ export default function Dashboard({ user, onRefreshUser }) {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', focusSearch);
     };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === '+' && document.activeElement === searchRef.current) {
+        e.preventDefault();
+        setShowForm((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const fetchLinks = useCallback(async () => {
@@ -322,16 +334,18 @@ export default function Dashboard({ user, onRefreshUser }) {
 
         {showForm && (
           <section className="add-link-section">
-            <form onSubmit={handleSubmit} className="add-link-form">
+            <form onSubmit={handleSubmit} className="add-link-form" onKeyDown={(e) => { if (e.key === 'Escape') setShowForm(false); }}>
               {error && <p className="form-error">{error}</p>}
               <div className="form-group">
                 <label htmlFor="url">URL *</label>
                 <input
+                  ref={urlRef}
                   id="url"
                   type="text"
                   placeholder="https://example.com"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
+                  autoFocus
                   required
                 />
               </div>
