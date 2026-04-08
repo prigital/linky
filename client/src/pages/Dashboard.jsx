@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SquarePen, Trash2 } from 'lucide-react';
+import POPULAR_URLS from '../popular-urls.json';
 
 const DEFAULT_CATEGORIES = [
   'Work', 'Social', 'Finance', 'News', 'Shopping',
@@ -82,6 +83,102 @@ function CategorySelect({ value, onChange, allCategories }) {
           {filtered.length === 0 && !showCreate && (
             <li className="category-combobox-empty">No categories found</li>
           )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function UrlAutocomplete({ value, onChange, onSelectSuggestion, inputRef, ...inputProps }) {
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const containerRef = useRef(null);
+  const listRef = useRef(null);
+
+  const q = value.trim().toLowerCase().replace(/^https?:\/\//, '');
+  const suggestions = q.length >= 1
+    ? POPULAR_URLS.filter((s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.url.toLowerCase().replace(/^https?:\/\//, '').includes(q)
+      ).slice(0, 8)
+    : [];
+
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [value]);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Scroll active item into view
+  useEffect(() => {
+    if (activeIndex >= 0 && listRef.current) {
+      const item = listRef.current.children[activeIndex];
+      item?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [activeIndex]);
+
+  function select(suggestion) {
+    onSelectSuggestion(suggestion);
+    setOpen(false);
+    setActiveIndex(-1);
+  }
+
+  function handleKeyDown(e) {
+    if (!open || suggestions.length === 0) {
+      if (inputProps.onKeyDown) inputProps.onKeyDown(e);
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, -1));
+    } else if (e.key === 'Enter' && activeIndex >= 0) {
+      e.preventDefault();
+      select(suggestions[activeIndex]);
+    } else if (e.key === 'Escape') {
+      e.stopPropagation();
+      setOpen(false);
+    } else {
+      if (inputProps.onKeyDown) inputProps.onKeyDown(e);
+    }
+  }
+
+  return (
+    <div className="url-autocomplete" ref={containerRef}>
+      <input
+        {...inputProps}
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => { if (suggestions.length > 0) setOpen(true); }}
+        onKeyDown={handleKeyDown}
+        autoComplete="off"
+      />
+      {open && suggestions.length > 0 && (
+        <ul className="url-autocomplete-dropdown" ref={listRef} role="listbox">
+          {suggestions.map((s, i) => (
+            <li
+              key={s.url}
+              className={i === activeIndex ? 'active' : ''}
+              onMouseDown={() => select(s)}
+              role="option"
+              aria-selected={i === activeIndex}
+            >
+              <span className="url-autocomplete-name">{s.name}</span>
+              <span className="url-autocomplete-url">{s.url.replace(/^https?:\/\//, '')}</span>
+            </li>
+          ))}
         </ul>
       )}
     </div>
@@ -338,13 +435,16 @@ export default function Dashboard({ user, onRefreshUser }) {
               {error && <p className="form-error">{error}</p>}
               <div className="form-group">
                 <label htmlFor="url">URL *</label>
-                <input
-                  ref={urlRef}
+                <UrlAutocomplete
                   id="url"
-                  type="text"
                   placeholder="https://example.com"
                   value={url}
-                  onChange={(e) => setUrl(e.target.value)}
+                  onChange={setUrl}
+                  onSelectSuggestion={(s) => {
+                    setUrl(s.url);
+                    if (!title.trim()) setTitle(s.name);
+                  }}
+                  inputRef={urlRef}
                   autoFocus
                   required
                 />
