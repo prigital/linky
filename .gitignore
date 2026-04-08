@@ -5,3 +5,4 @@ client/dist
 *.session.db
 sessions.db
 /.claude
+server.log
