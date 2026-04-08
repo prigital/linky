@@ -107,6 +107,20 @@ export default function Dashboard({ user, onRefreshUser }) {
   const [editError, setEditError] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    const focusSearch = () => searchRef.current?.focus();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') focusSearch();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', focusSearch);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', focusSearch);
+    };
+  }, []);
 
   const fetchLinks = useCallback(async () => {
     try {
@@ -283,6 +297,7 @@ export default function Dashboard({ user, onRefreshUser }) {
       <main className="main-content">
         <section className="links-search-section">
           <input
+            ref={searchRef}
             className="search-input"
             type="search"
             placeholder="Search links…"
