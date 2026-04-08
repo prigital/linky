@@ -53,6 +53,10 @@ SESSION_SECRET=...
 PORT=3001          # optional, defaults to 3001
 ```
 
+## UX Philosophy
+
+The app must be fully usable without a mouse. Every action (saving, editing, deleting links, navigating, searching) should be accessible via keyboard shortcuts. When adding new features, always consider and implement keyboard access alongside any mouse/click interactions.
+
 ## Data Storage
 
 - `linky.db` — SQLite database (auto-created at root on first run), stores `users` and `links`.
