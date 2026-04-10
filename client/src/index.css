@@ -417,7 +417,8 @@ a:hover {
 }
 
 .category-combobox-dropdown li:hover,
-.category-combobox-dropdown li.active {
+.category-combobox-dropdown li.active,
+.category-combobox-dropdown li.highlighted {
   background: #f3f4f6;
   color: #1a1a1a;
 }
