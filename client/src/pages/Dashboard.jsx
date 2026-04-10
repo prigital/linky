@@ -10,7 +10,9 @@ const DEFAULT_CATEGORIES = [
 function CategorySelect({ value, onChange, allCategories }) {
   const [input, setInput] = useState(value || '');
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef(null);
+  const listRef = useRef(null);
 
   // Keep input in sync when value changes externally (e.g. edit form opens)
   useEffect(() => {
@@ -28,6 +30,19 @@ function CategorySelect({ value, onChange, allCategories }) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // Reset active index when filtered list changes
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [input]);
+
+  // Scroll active item into view
+  useEffect(() => {
+    if (activeIndex >= 0 && listRef.current) {
+      const item = listRef.current.children[activeIndex];
+      item?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [activeIndex]);
+
   const allOptions = [
     ...DEFAULT_CATEGORIES,
     ...allCategories.filter((c) => !DEFAULT_CATEGORIES.includes(c)),
@@ -38,16 +53,55 @@ function CategorySelect({ value, onChange, allCategories }) {
   const exactMatch = allOptions.some((c) => c.toLowerCase() === q);
   const showCreate = q && !exactMatch;
 
+  // Total selectable items: filtered + optional "Create" entry
+  const totalItems = filtered.length + (showCreate ? 1 : 0);
+
   function select(cat) {
     setInput(cat);
     onChange(cat);
     setOpen(false);
+    setActiveIndex(-1);
   }
 
   function clear() {
     setInput('');
     onChange('');
     setOpen(false);
+    setActiveIndex(-1);
+  }
+
+  function handleKeyDown(e) {
+    if (!open) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setOpen(true);
+        setActiveIndex(0);
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, totalItems - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, -1));
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      if (activeIndex >= 0) {
+        e.preventDefault();
+        if (activeIndex < filtered.length) {
+          select(filtered[activeIndex]);
+        } else if (showCreate) {
+          select(input.trim());
+        }
+      } else if (e.key === 'Tab') {
+        // Allow normal tab behavior when no item is active
+        setOpen(false);
+      }
+    } else if (e.key === 'Escape') {
+      e.stopPropagation();
+      setOpen(false);
+      setActiveIndex(-1);
+    }
   }
 
   return (
@@ -63,20 +117,24 @@ function CategorySelect({ value, onChange, allCategories }) {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
+          onKeyDown={handleKeyDown}
         />
         {input && (
           <button type="button" className="category-combobox-clear" onClick={clear} aria-label="Clear category">✕</button>
         )}
       </div>
       {open && (
-        <ul className="category-combobox-dropdown">
-          {filtered.map((c) => (
-            <li key={c} onMouseDown={() => select(c)} className={c === value ? 'active' : ''}>
+        <ul className="category-combobox-dropdown" ref={listRef}>
+          {filtered.map((c, i) => (
+            <li key={c} onMouseDown={() => select(c)} className={i === activeIndex ? 'active' : ''}>
               {c}
             </li>
           ))}
           {showCreate && (
-            <li className="category-combobox-create" onMouseDown={() => select(input.trim())}>
+            <li
+              className={`category-combobox-create${activeIndex === filtered.length ? ' active' : ''}`}
+              onMouseDown={() => select(input.trim())}
+            >
               Create "<strong>{input.trim()}</strong>"
             </li>
           )}
