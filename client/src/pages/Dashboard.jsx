@@ -126,7 +126,11 @@ function CategorySelect({ value, onChange, allCategories }) {
       {open && (
         <ul className="category-combobox-dropdown" ref={listRef}>
           {filtered.map((c, i) => (
-            <li key={c} onMouseDown={() => select(c)} className={i === activeIndex ? 'active' : ''}>
+            <li
+              key={c}
+              onMouseDown={() => select(c)}
+              className={[i === activeIndex ? 'active' : '', c === value ? 'selected' : ''].filter(Boolean).join(' ') || undefined}
+            >
               {c}
             </li>
           ))}
