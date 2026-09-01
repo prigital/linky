@@ -168,9 +168,15 @@ worth reading before changing the CloudFront configuration.
 
 ## Contributing
 
-Issues and pull requests welcome. Keep features keyboard-accessible, match the
-existing style (2-space indent, semicolons, CommonJS backend, ES modules
-frontend), and use short imperative commit subjects.
+Issues and pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for
+local setup, style, and how to verify a change, and
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community expectations. To report a
+security issue, see [SECURITY.md](SECURITY.md) — please do that privately rather
+than opening a public issue.
+
+The short version: keep features keyboard-accessible, match the existing style
+(2-space indent, semicolons, CommonJS backend, ES modules frontend), and use
+short imperative commit subjects.
 
 There is no automated test suite yet — see the open issues if you would like to
 help change that.
