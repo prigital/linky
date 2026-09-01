@@ -8,9 +8,9 @@
   },
   "scripts": {
     "build": "tsc",
-    "synth": "cdk synth",
+    "synth": "cdk synth --all",
     "diff": "cdk diff",
-    "deploy": "cdk deploy"
+    "deploy": "cdk deploy --all"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

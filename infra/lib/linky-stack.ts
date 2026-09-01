@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
@@ -10,12 +11,20 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 export interface LinkyStackProps extends cdk.StackProps {
   readonly secretName: string;
   readonly appUrl?: string;
+  /** Custom domain. When set, the distribution serves it and an alias record is written. */
+  readonly domainName?: string;
+  /** Certificate for domainName. Must live in us-east-1. */
+  readonly certificate?: acm.ICertificate;
+  readonly hostedZoneId?: string;
+  readonly hostedZoneName?: string;
 }
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
@@ -170,9 +179,16 @@ export class LinkyStack extends cdk.Stack {
         '/auth/*': apiBehavior,
       },
       httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
-      // minimumProtocolVersion is deliberately omitted: it has no effect while
-      // the distribution uses the default CloudFront certificate. Set it
-      // together with `certificate` when a custom domain is added.
+      ...(props.domainName && props.certificate
+        ? {
+            domainNames: [props.domainName],
+            certificate: props.certificate,
+            // Only meaningful with a custom certificate; CloudFront's default
+            // certificate is fixed at TLSv1.
+            minimumProtocolVersion:
+              cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+          }
+        : {}),
       priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
     });
 
@@ -184,6 +200,40 @@ export class LinkyStack extends cdk.Stack {
       distributionPaths: ['/*'],
       prune: true,
     });
+
+    // --------------------------------------------------------------- dns
+    // These alias records are CDK-managed and point at the distribution.
+    // The initial cutover from the EC2 A record needed a one-time flag to
+    // adopt the pre-existing record; it was removed afterwards, since once CDK
+    // owns the records it only carries a delete-then-create window into every
+    // future deploy. CDK deprecates that flag for exactly that reason.
+    if (props.domainName && props.hostedZoneId && props.hostedZoneName) {
+      const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'Zone', {
+        hostedZoneId: props.hostedZoneId,
+        zoneName: props.hostedZoneName,
+      });
+      const recordName = props.domainName.replace(`.${props.hostedZoneName}`, '');
+      const target = route53.RecordTarget.fromAlias(
+        new targets.CloudFrontTarget(distribution)
+      );
+
+      new route53.ARecord(this, 'AliasRecord', {
+        zone,
+        recordName,
+        target,
+      });
+
+      // CloudFront serves IPv6 by default, so publish AAAA too.
+      new route53.AaaaRecord(this, 'AliasRecordV6', {
+        zone,
+        recordName,
+        target,
+      });
+
+      new cdk.CfnOutput(this, 'CustomDomainUrl', {
+        value: `https://${props.domainName}`,
+      });
+    }
 
     // -------------------------------------------------------------- outputs
     new cdk.CfnOutput(this, 'DistributionDomainName', {
