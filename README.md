@@ -118,14 +118,26 @@ Before the first deploy:
 3. **Register the redirect URI.** After the first deploy, add the
    `GoogleRedirectUri` stack output to your Google OAuth client.
 
-If you are deploying your own copy, override the domain defaults:
+If you are deploying your own copy, set your own domain in `infra/cdk.json`
+under `context`:
+
+```json
+"domainName": "links.example.com",
+"hostedZoneId": "Z...",
+"hostedZoneName": "example.com"
+```
+
+Or override per command:
 
 ```bash
 npm run deploy -- -c domainName=links.example.com -c hostedZoneId=Z... -c hostedZoneName=example.com
 ```
 
-or pass `-c domainName=` to deploy without a custom domain and use the
-CloudFront URL.
+Clear `domainName` to deploy without a custom domain and use the CloudFront URL:
+
+```bash
+npm run deploy -- -c domainName=
+```
 
 ### Cost
 
