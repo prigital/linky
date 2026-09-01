@@ -10,6 +10,9 @@
     "@aws-cdk/aws-iam:minimizePolicies": true,
     "@aws-cdk/core:validateSnapshotRemovalPolicy": true,
     "@aws-cdk/aws-s3:createDefaultLoggingPolicy": true,
-    "@aws-cdk/aws-cloudfront:useOriginAccessControl": true
+    "@aws-cdk/aws-cloudfront:useOriginAccessControl": true,
+    "domainName": "linky.codenut.com",
+    "hostedZoneId": "Z1X12TLGS0JP9R",
+    "hostedZoneName": "codenut.com"
   }
 }

@@ -118,14 +118,26 @@ Before the first deploy:
 3. **Register the redirect URI.** After the first deploy, add the
    `GoogleRedirectUri` stack output to your Google OAuth client.
 
-If you are deploying your own copy, override the domain defaults:
+If you are deploying your own copy, set your own domain in `infra/cdk.json`
+under `context`:
+
+```json
+"domainName": "links.example.com",
+"hostedZoneId": "Z...",
+"hostedZoneName": "example.com"
+```
+
+Or override per command:
 
 ```bash
 npm run deploy -- -c domainName=links.example.com -c hostedZoneId=Z... -c hostedZoneName=example.com
 ```
 
-or pass `-c domainName=` to deploy without a custom domain and use the
-CloudFront URL.
+Clear `domainName` to deploy without a custom domain and use the CloudFront URL:
+
+```bash
+npm run deploy -- -c domainName=
+```
 
 ### Cost
 
@@ -156,9 +168,15 @@ worth reading before changing the CloudFront configuration.
 
 ## Contributing
 
-Issues and pull requests welcome. Keep features keyboard-accessible, match the
-existing style (2-space indent, semicolons, CommonJS backend, ES modules
-frontend), and use short imperative commit subjects.
+Issues and pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for
+local setup, style, and how to verify a change, and
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community expectations. To report a
+security issue, see [SECURITY.md](SECURITY.md) — please do that privately rather
+than opening a public issue.
+
+The short version: keep features keyboard-accessible, match the existing style
+(2-space indent, semicolons, CommonJS backend, ES modules frontend), and use
+short imperative commit subjects.
 
 There is no automated test suite yet — see the open issues if you would like to
 help change that.

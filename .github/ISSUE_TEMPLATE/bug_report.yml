@@ -1,0 +1,47 @@
+name: Bug report
+description: Something is not working as expected
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Press ...
+        3. See ...
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did you hit this?
+      options:
+        - The deployed app (linky.codenut.com)
+        - Running locally (npm run dev)
+        - Deploying my own copy (cdk deploy)
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: input
+    attributes:
+      label: Were you using the keyboard or the mouse?
+      description: Keyboard access is a hard requirement, so this matters more here than in most projects.
+      options:
+        - Keyboard
+        - Mouse
+        - Both
+        - Not applicable
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: Browser and version, console errors, screenshots, relevant log output.

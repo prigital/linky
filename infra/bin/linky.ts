@@ -16,10 +16,21 @@ const secretName = app.node.tryGetContext('secretName') || 'linky/prod';
 // whatever domain the request arrived on.
 const appUrl = app.node.tryGetContext('appUrl');
 
-// Custom domain. Pass -c domainName= (empty) to deploy without one.
-const domainName = app.node.tryGetContext('domainName') ?? 'linky.codenut.com';
-const hostedZoneId = app.node.tryGetContext('hostedZoneId') ?? 'Z1X12TLGS0JP9R';
-const hostedZoneName = app.node.tryGetContext('hostedZoneName') ?? 'codenut.com';
+// Custom domain, read from context (set in cdk.json, overridable with -c).
+// Deliberately no hardcoded fallback: a fork that has not set its own values
+// should deploy to the CloudFront domain rather than reference a zone it does
+// not own. Pass -c domainName= (empty) to opt out of a custom domain.
+const domainName = app.node.tryGetContext('domainName') || undefined;
+const hostedZoneId = app.node.tryGetContext('hostedZoneId') || undefined;
+const hostedZoneName = app.node.tryGetContext('hostedZoneName') || undefined;
+
+if (domainName && !(hostedZoneId && hostedZoneName)) {
+  throw new Error(
+    `domainName is set to "${domainName}" but hostedZoneId and hostedZoneName are not. ` +
+      'Set all three in cdk.json (or pass -c), or clear domainName to deploy ' +
+      'without a custom domain.'
+  );
+}
 
 const account = process.env.CDK_DEFAULT_ACCOUNT;
 const region = process.env.CDK_DEFAULT_REGION || 'us-west-2';
