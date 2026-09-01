@@ -4,21 +4,37 @@
   "description": "Save and revisit your links",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "ddb": "docker compose up -d dynamodb-local",
+    "ddb:init": "./scripts/create-local-table.sh",
+    "ddb:stop": "docker compose down",
     "server": "node server/index.js",
     "client": "npm --prefix client run dev",
     "build": "npm --prefix client run build",
-    "start": "NODE_ENV=production node server/index.js"
+    "start": "SERVE_STATIC=true NODE_ENV=production node server/index.js",
+    "infra:install": "npm --prefix infra install",
+    "infra:synth": "npm --prefix infra run synth",
+    "infra:diff": "npm --prefix infra run diff",
+    "infra:deploy": "npm --prefix infra run deploy",
+    "deploy": "npm run build && npm run infra:deploy"
   },
   "dependencies": {
-    "better-sqlite3": "^9.6.0",
-    "connect-sqlite3": "^0.9.13",
+    "@aws-sdk/client-dynamodb": "^3.1123.0",
+    "@aws-sdk/client-secrets-manager": "^3.1123.0",
+    "@aws-sdk/lib-dynamodb": "^3.1123.0",
+    "@codegenie/serverless-express": "^4.17.1",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "express-session": "^1.18.0",
+    "jsonwebtoken": "^9.0.3",
     "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "ulid": "^3.0.2"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "esbuild": "^0.28.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
   }
 }

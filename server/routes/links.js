@@ -1,50 +1,44 @@
 const express = require('express');
-const { db } = require('../db');
+const store = require('../store');
+const { requireAuth } = require('../session');
 
 const router = express.Router();
-
-// Auth middleware
-function requireAuth(req, res, next) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  next();
-}
 
 router.use(requireAuth);
 
 // GET /api/links
-router.get('/', function (req, res) {
-  const links = db
-    .prepare(
-      'SELECT * FROM links WHERE user_id = ? ORDER BY created_at DESC'
-    )
-    .all(req.user.id);
-  res.json({ links });
+router.get('/', async function (req, res, next) {
+  try {
+    const links = await store.listLinks(req.user.id);
+    res.json({ links });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // POST /api/links
-router.post('/', function (req, res) {
+router.post('/', async function (req, res, next) {
   const { url, title, notes, category } = req.body;
 
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return res.status(400).json({ error: 'url is required' });
   }
 
-  const stmt = db.prepare(
-    'INSERT INTO links (user_id, url, title, notes, category) VALUES (?, ?, ?, ?, ?)'
-  );
-  const result = stmt.run(req.user.id, url.trim(), title || null, notes || null, category || null);
-
-  const newLink = db
-    .prepare('SELECT * FROM links WHERE id = ?')
-    .get(result.lastInsertRowid);
-
-  res.status(201).json({ link: newLink });
+  try {
+    const link = await store.createLink(req.user.id, {
+      url: url.trim(),
+      title,
+      notes,
+      category,
+    });
+    res.status(201).json({ link });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // PUT /api/links/:id
-router.put('/:id', function (req, res) {
+router.put('/:id', async function (req, res, next) {
   const { id } = req.params;
   const { url, title, notes, category } = req.body;
 
@@ -52,36 +46,39 @@ router.put('/:id', function (req, res) {
     return res.status(400).json({ error: 'url is required' });
   }
 
-  const link = db
-    .prepare('SELECT * FROM links WHERE id = ? AND user_id = ?')
-    .get(id, req.user.id);
+  try {
+    const link = await store.updateLink(req.user.id, id, {
+      url: url.trim(),
+      title,
+      notes,
+      category,
+    });
 
-  if (!link) {
-    return res.status(404).json({ error: 'Link not found' });
+    if (!link) {
+      return res.status(404).json({ error: 'Link not found' });
+    }
+
+    res.json({ link });
+  } catch (err) {
+    next(err);
   }
-
-  db.prepare(
-    'UPDATE links SET url = ?, title = ?, notes = ?, category = ? WHERE id = ? AND user_id = ?'
-  ).run(url.trim(), title || null, notes || null, category || null, id, req.user.id);
-
-  const updated = db.prepare('SELECT * FROM links WHERE id = ?').get(id);
-  res.json({ link: updated });
 });
 
 // DELETE /api/links/:id
-router.delete('/:id', function (req, res) {
+router.delete('/:id', async function (req, res, next) {
   const { id } = req.params;
 
-  const link = db
-    .prepare('SELECT * FROM links WHERE id = ? AND user_id = ?')
-    .get(id, req.user.id);
+  try {
+    const deleted = await store.deleteLink(req.user.id, id);
 
-  if (!link) {
-    return res.status(404).json({ error: 'Link not found' });
+    if (!deleted) {
+      return res.status(404).json({ error: 'Link not found' });
+    }
+
+    res.status(204).send();
+  } catch (err) {
+    next(err);
   }
-
-  db.prepare('DELETE FROM links WHERE id = ? AND user_id = ?').run(id, req.user.id);
-  res.status(204).send();
 });
 
 module.exports = router;
