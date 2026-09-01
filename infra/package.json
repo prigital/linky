@@ -1,0 +1,25 @@
+{
+  "name": "linky-infra",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CDK infrastructure for Linky",
+  "bin": {
+    "linky": "bin/linky.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "synth": "cdk synth --all",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy --all"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "aws-cdk": "^2.1024.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.7.2"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.219.0",
+    "constructs": "^10.4.2"
+  }
+}

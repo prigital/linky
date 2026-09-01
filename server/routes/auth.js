@@ -1,87 +1,151 @@
 const express = require('express');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { db } = require('../db');
+
+const store = require('../store');
+const { getConfig } = require('../config');
+const {
+  signSession,
+  setSessionCookie,
+  clearSessionCookie,
+  readSession,
+} = require('../session');
 
 const router = express.Router();
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.APP_URL
-        ? `${process.env.APP_URL}/auth/google/callback`
-        : '/auth/google/callback',
-    },
-    function (accessToken, refreshToken, profile, done) {
-      try {
-        const googleId = profile.id;
-        const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
-        const name = profile.displayName || null;
-        const avatar =
-          profile.photos && profile.photos[0] ? profile.photos[0].value : null;
+// The Google strategy needs its client credentials synchronously at
+// construction, but they arrive asynchronously from Secrets Manager and
+// CommonJS has no top-level await. Memoize the registration and await it at the
+// top of the two OAuth routes. server/lambda.js primes this before serving, so
+// in Lambda it is already resolved by the first request.
+let strategyPromise = null;
 
-        // Upsert: insert if not exists, then update
-        db.prepare(
-          'INSERT OR IGNORE INTO users (google_id, email, name, avatar) VALUES (?, ?, ?, ?)'
-        ).run(googleId, email, name, avatar);
+function ensureStrategy() {
+  if (strategyPromise) return strategyPromise;
 
-        db.prepare(
-          'UPDATE users SET email = ?, name = ?, avatar = ? WHERE google_id = ?'
-        ).run(email, name, avatar, googleId);
-
-        const user = db.prepare('SELECT * FROM users WHERE google_id = ?').get(googleId);
-        return done(null, user);
-      } catch (err) {
-        return done(err);
+  strategyPromise = getConfig()
+    .then(function (config) {
+      if (!config.googleClientId || !config.googleClientSecret) {
+        throw new Error('Google OAuth client credentials are not configured');
       }
-    }
-  )
-);
 
-passport.serializeUser(function (user, done) {
-  done(null, user.id);
-});
+      passport.use(
+        new GoogleStrategy(
+          {
+            clientID: config.googleClientId,
+            clientSecret: config.googleClientSecret,
+            // Overridden per request by callbackUrlFor(); this value is only a
+            // fallback for the strategy's own validation.
+            callbackURL: '/auth/google/callback',
+          },
+          function (accessToken, refreshToken, profile, done) {
+            const googleId = profile.id;
+            const email =
+              profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+            const name = profile.displayName || null;
+            const avatar =
+              profile.photos && profile.photos[0] ? profile.photos[0].value : null;
 
-passport.deserializeUser(function (id, done) {
-  try {
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
-    done(null, user || false);
-  } catch (err) {
-    done(err);
-  }
-});
+            store
+              .upsertUser({ googleId, email, name, avatar })
+              .then(function (user) {
+                done(null, user);
+              })
+              .catch(done);
+          }
+        )
+      );
+    })
+    .catch(function (err) {
+      strategyPromise = null; // never cache a failure
+      throw err;
+    });
+
+  return strategyPromise;
+}
+
+// CloudFront strips the viewer Host header (AllViewerExceptHostHeader) and
+// substitutes the API Gateway origin domain, so req.get('host') would yield
+// <api-id>.execute-api.<region>.amazonaws.com and Google would reject the
+// callback with redirect_uri_mismatch. A CloudFront Function copies the real
+// host into x-forwarded-host before that stripping happens.
+function appUrlFor(req) {
+  if (process.env.APP_URL) return process.env.APP_URL;
+
+  const forwarded = req.headers['x-forwarded-host'];
+  if (forwarded) return `https://${forwarded.split(',')[0].trim()}`;
+
+  return `${req.protocol}://${req.get('host')}`;
+}
+
+function callbackUrlFor(req) {
+  return `${appUrlFor(req)}/auth/google/callback`;
+}
 
 // GET /auth/google
-router.get(
-  '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+router.get('/google', function (req, res, next) {
+  ensureStrategy()
+    .then(function () {
+      passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        session: false,
+        callbackURL: callbackUrlFor(req),
+      })(req, res, next);
+    })
+    .catch(next);
+});
 
 // GET /auth/google/callback
-router.get(
-  '/google/callback',
-  passport.authenticate('google', { failureRedirect: '/' }),
-  function (req, res) {
-    res.redirect('/');
-  }
-);
+// Google requires the callbackURL here to match the one used above exactly.
+router.get('/google/callback', function (req, res, next) {
+  ensureStrategy()
+    .then(function () {
+      passport.authenticate(
+        'google',
+        { session: false, callbackURL: callbackUrlFor(req) },
+        function (err, user) {
+          if (err) return next(err);
+          if (!user) return res.redirect('/');
+
+          signSession(user.google_id)
+            .then(function (token) {
+              setSessionCookie(res, token);
+              res.redirect('/');
+            })
+            .catch(next);
+        }
+      )(req, res, next);
+    })
+    .catch(next);
+});
 
 // GET /auth/logout
-router.get('/logout', function (req, res, next) {
-  req.logout(function (err) {
-    if (err) return next(err);
-    res.redirect('/');
-  });
+// req.logout is a passport session API and must not be called now that there is
+// no session. Clearing the cookie also fixes the original bug where logout left
+// both the cookie and the session row in place.
+router.get('/logout', function (req, res) {
+  clearSessionCookie(res);
+  res.redirect('/');
 });
 
 // GET /auth/me
-router.get('/me', function (req, res) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: 'Not authenticated' });
+router.get('/me', async function (req, res, next) {
+  try {
+    const session = await readSession(req);
+    if (!session) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const user = await store.getUserById(session.id);
+    if (!user) {
+      clearSessionCookie(res);
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    res.json({ user });
+  } catch (err) {
+    next(err);
   }
-  res.json({ user: req.user });
 });
 
 module.exports = router;

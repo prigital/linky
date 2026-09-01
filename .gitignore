@@ -6,3 +6,7 @@ client/dist
 sessions.db
 /.claude
 server.log
+
+# CDK
+infra/node_modules
+infra/cdk.out
