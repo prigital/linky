@@ -2,6 +2,7 @@
   "name": "linky",
   "version": "1.0.0",
   "license": "MIT",
+  "author": "Prigital Corp.",
   "description": "Save and revisit your links",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
