@@ -1,14 +1,33 @@
 name: Claude Code Review
 
+# Automatic review on every pull request is DISABLED.
+#
+# The workflow runs and reviews correctly, but posts nothing: every run ends
+# with "No buffered inline comments" and no comment appears on the pull
+# request. That held on a substantial code change (39 turns, ~$1.11 on #18),
+# so it is not the reviewer deciding a PR is too trivial to review.
+#
+# Adding --comment and the inline-comment tool to claude_args (#17) did not
+# fix it, and the cause is still unknown; the action runs with
+# show_full_output: false, so the review's own conclusion never reaches the
+# log. Left enabled it costs roughly a dollar of usage per pull request and
+# produces nothing readable.
+#
+# Meanwhile, mentioning @claude on a pull request works and posts correctly.
+# That path is handled by claude.yml.
+#
+# To re-enable, restore the pull_request trigger below. Before doing so, set
+# show_full_output: true on the action step so the log shows what the review
+# concluded.
 on:
-  pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull request number to review'
+        required: true
+        type: string
+  # pull_request:
+  #   types: [opened, synchronize, ready_for_review, reopened]
 
 jobs:
   claude-review:
@@ -38,7 +57,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
+          prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ inputs.pr_number || github.event.pull_request.number }}'
           # Required even though the skill's own allowed-tools frontmatter names
           # the same tool: the action starts the inline-comment MCP server only
           # when --allowedTools in claude_args names it.

@@ -4,6 +4,18 @@ const { requireAuth } = require('../session');
 
 const router = express.Router();
 
+// Only http(s) links are storable. The client normalizes bare hosts to
+// https://, but a direct API call can send anything, and the stored value is
+// rendered straight into an href — so `javascript:` has to be rejected here.
+function isAllowedUrl(raw) {
+  try {
+    const u = new URL(raw);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 router.use(requireAuth);
 
 // GET /api/links
@@ -22,6 +34,10 @@ router.post('/', async function (req, res, next) {
 
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return res.status(400).json({ error: 'url is required' });
+  }
+
+  if (!isAllowedUrl(url.trim())) {
+    return res.status(400).json({ error: 'url must be http or https' });
   }
 
   try {
@@ -44,6 +60,10 @@ router.put('/:id', async function (req, res, next) {
 
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return res.status(400).json({ error: 'url is required' });
+  }
+
+  if (!isAllowedUrl(url.trim())) {
+    return res.status(400).json({ error: 'url must be http or https' });
   }
 
   try {
