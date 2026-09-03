@@ -1,0 +1,7 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- CodeNut hex-nut brand mark: a blue hexagonal nut with a punched-through
+       center hole on a transparent background, scaled to fill the canvas. -->
+  <path fill="#2f6df0" fill-rule="evenodd"
+        d="M256 6 472.5 131 472.5 381 256 506 39.5 381 39.5 131Z
+           M256 138a118 118 0 1 0 0 236 118 118 0 1 0 0-236Z"/>
+</svg>
